@@ -1,7 +1,7 @@
 # DON CICLETO API DOCUMENTATION
 
 ## Introducción
-Este proyecto tiene como objetivo [breve descripción del objetivo principal del proyecto]. En este documento, encontrarás instrucciones detalladas sobre cómo publicar la documentación de API Blueprint (.apib) en GitHub Pages.
+En este documento, encontrarás instrucciones detalladas sobre cómo publicar la documentación de API Blueprint (.apib) en GitHub Pages.
 
 ## Requisitos previos
 Antes de comenzar, asegúrate de tener lo siguiente:
