@@ -1,0 +1,1255 @@
+FORMAT: 1A
+HOST: https://doncicleto-stagging.herokuapp.com
+
+# Don Cicleto API
+This document reports Don Cicleto API.
+
+NOTE: This document is **in progress**.
+
+# API Structure
+When making requests to the API, the server's response will have a determined format. The following shows the schema of the responses.
+
++ `data (object)` - Object containing API's response. It could be an object or an array, depending on the request.
+    + `type (string)` - Shows what type of information is contained in the response.
+    + `id (number)` - Identifying number for the given resource of a certain `type`.
+    + `attributes (object)` - Contains the information itself from the request.
+    + `links (object)` - Contains some references to the resource itself.
+        + `self (string)` - Link to request the resource itself.
+    + `relationships (object)` - Information about related resources for the main resource.
+        + `Resource type`
+            + `data (object)` - Contains the first two attributes from this same schema.
++ `included (object/array)` - Contains the objects referenced in the relationships.
+
+Aside from the reponse format, every request done to the server will need a **public key** associated to the client.
+
+# Group Parkings
+A parking is a specific lovation in which Don Cicleto keeps user's bicycles.
+
+## Parking [/api/v1/parkings/{parking_id}]
++ Attributes (object)
+    + acceso (string) - Information about certain parking access
+    + advertencias (string) - Information about a parking warnings
+    + `alquiler-bici` (boolean) - Whether this parking rents bicycles
+    + `dias-cerrados` (string) - Week dyas when the parking is closed
+    + `email-contacto` (string) - Contact email for the parking manager
+    + info (string) - General information about the parking
+    + nombre (string) - Parking name
+    + `parking-type` (number) - Type of parking
+    + `door-type` (number) - Type of door. It could be 0, 1 or 2 to refer to a parking without access restriction, with a numpad or with Bluetooth lock, respectivelly
+    + `lock-mac` (string) - MAC address for the Bluetooth receiver, for those doors with Bluetooth
+    + `free-fixed-spaces` (number) - Amount of parkings available for subscriptions
+    + `plazas-totales` (number) - Total number of parking spaces
+    + `telefono-contacto` (string) - Phone number for the parking manager
+    + address (string) - Parking address
+    + latitude (number) - Parking latitude
+    + longitude (number) - Parking longitude
+    + `address-locality` (string) - Location of the parking, formatted as `(latitude, longitude)`
+    + `parking-lot-price` (number) - Price for a parking lot
+    + image (object) - Addresses to different images
+        + url (string) - Link to original image
+        + normal (object)
+            + url (string) - Link to normal sized image
+        + thumb (object)
+            + url (string) - Link to thumbnail image
+        + `mini_thumb` (object)
+            + url (string) - Link to mini-thumbnail image
+        + image (object) - Copy of the same object (legacy)
+    + `free-spaces` (number) - Number of free spaces in a parking
+    + `month-price` (number) - Monthly price for a parking
+
+### Retrieve information about a parking [GET]
+This endpoint allows requests to get information about a parking.
+
++ Parameters
+    + parking_id (number) - Identification number for a parking
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "data": {
+                    "type": "parkings",
+                    "id": "23",
+                    "attributes": {
+                        "acceso": "24h",
+                        "advertencias": null,
+                        "alquiler-bici": null,
+                        "dias-cerrados": null,
+                        "email-contacto": null,
+                        "info": "Situado en la primera planta. El Parking San Clemente se encuentra en Calle Felipe Sanclemente 8 de Zaragoza. Situado al lado de la zona más comercial de la ciudad, a tan solo 250 metros de El Corte Inglés y a 300 metros de Plaza de Aragón. \r\n",
+                        "nombre": "Felipe Sanclemente 8 (ZARAGOZA)",
+                        "parking-type": 1,
+                        "door-type": 0,
+                        "lock-mac": null,
+                        "free-fixed-spaces": 1,
+                        "plazas-totales": null,
+                        "telefono-contacto": "609260717",
+                        "address": "Calle Felipe San Clemente 8",
+                        "latitude": 41.6495782,
+                        "longitude": -0.8820205,
+                        "address-locality": "41.6495782, -0.8820205",
+                        "parking-lot-price": null,
+                        "image": {
+                            "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/Sanclemente.JPG",
+                            "normal": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/normal_Sanclemente.JPG"
+                            },
+                            "thumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/thumb_Sanclemente.JPG"
+                            },
+                            "mini_thumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/mini_thumb_Sanclemente.JPG"
+                            },
+                            "image": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/Sanclemente.JPG",
+                                "normal": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/normal_Sanclemente.JPG"
+                                },
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/thumb_Sanclemente.JPG"
+                                },
+                                "mini_thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/23/mini_thumb_Sanclemente.JPG"
+                                }
+                            }
+                        },
+                        "free-spaces": 1,
+                        "month-price": null
+                    },
+                    "links": {
+                        "self": "/api/v1/parkings/23"
+                    }
+                }
+            }
+
+### Unlock a parking [POST /api/v1/parkings/{parking_id}/unlock]
+In case a parking has a Bluetooth lock, the lock will be unlocked.
+
++ Parameters
+    + parking_id (number) - Identification number for a parking
+
++ Request (application/json)
+    + Body
+
+            {
+                "session": "<SESSION IDENTIFIER>"
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "result": "success",
+                "message": "Command successfully completed",
+                "error_code": 0,
+                "data": {
+                    "commands": "COMMAND_STRING_HERE"
+                },
+                "token": "TOKEN_HERE",
+                "request": "unlock"
+            }
+
+
+## Collection of parkings [/api/v1/parkings]
+These are the options to retrieve multiple parkings.
+
+### Retrieve all parkings [GET]
+This endpoints enables to retrieve all the parkings available.
+
++ Response 200 (application/json)
+
+    + Body
+
+            {
+                "data": [
+                    {
+                        "type": "parkings",
+                        "id": "30",
+                        "attributes": {
+                            "acceso": "L-D de 10:00 a 14:00 -16:00 20:00 ",
+                            "advertencias": null,
+                            "alquiler-bici": null,
+                            "dias-cerrados": null,
+                            "email-contacto": null,
+                            "info": "Tienda de bicis clásicas cerca de la playa de la Nova Mar Bella, el 22@ y el casco antiguo de Poble Nou.\r\nPregunta por las plazas de Don Cicleto y Gonzalo, su propietario, te atenderá encantado.",
+                            "nombre": "Bcn Classic Rides (Barcelona)",
+                            "parking-type": 1,
+                            "door-type": 0,
+                            "lock-mac": null,
+                            "free-fixed-spaces": 0,
+                            "plazas-totales": null,
+                            "telefono-contacto": "93 853 96 57 / 744400546",
+                            "address": "calle Dr. Trueta 202 Barcelona 08005",
+                            "latitude": 41.3979302,
+                            "longitude": 2.2029612,
+                            "address-locality": "41.397925, 2.202983",
+                            "parking-lot-price": "19.99",
+                            "image": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/fachada_BCN.jpg",
+                                "normal": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/normal_fachada_BCN.jpg"
+                                },
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/thumb_fachada_BCN.jpg"
+                                },
+                                "mini_thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/mini_thumb_fachada_BCN.jpg"
+                                },
+                                "image": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/fachada_BCN.jpg",
+                                    "normal": {
+                                        "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/normal_fachada_BCN.jpg"
+                                    },
+                                    "thumb": {
+                                        "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/thumb_fachada_BCN.jpg"
+                                    },
+                                    "mini_thumb": {
+                                        "url": "https://doncicleto.s3.amazonaws.com/uploads/parking/image/30/mini_thumb_fachada_BCN.jpg"
+                                    }
+                                }
+                            },
+                            "free-spaces": 1,
+                            "month-price": "19.99"
+                        },
+                        "links": {
+                            "self": "/api/v1/parkings/30"
+                        }
+                    },
+                    ...
+                ]
+            }
+
+# Group Subscriptions
+These are the resources related to subscriptions. A subscription is an object that identifies a monthly booking of a space in Don Cicleto. These subscriptions are renewed automatically every month.
+
+## Subscription [/api/v1/subscriptions/{subscription_id}]
++ Attributes (object)
+    + actived (boolean) - Shows whether a subscription is active or not
+    + `created-at` (string) - Timestamp for the creation of a subscription
+    + `updated-at` (string) - Timestamp for the last update of a subscription
+    + `promotional-code` (string) - The promotional code used when purchasing the subscription
+    + license (string) - Link to the license SVG
+    + `show-license` (boolean) - Whether a license needs to be shown
+    + `paymill-id` (string) - (Legacy) Paymill identification code
+    + keycode (number) - For the parkings with keycode, the number a user needs to put
+    + `finish-at` (string) - When a subscription ends
+    + `finished-at` (string) - When a subscription was cancelled by the user
+    + amount (string) - Price of the subscription
+    + total (string) - Total price of a subscription, including discounts
+
+
+### Retrieve a subscription [GET]
+Returns the information for a subscription.
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": {
+                    "type": "subscriptions",
+                    "id": "971",
+                    "attributes": {
+                        "actived": false,
+                        "created-at": "2021-02-11T09:29:05.157Z",
+                        "updated-at": "2021-02-16T17:57:43.111Z",
+                        "promotional-code": null,
+                        "license": "http://res.cloudinary.com/hrxua5b0v/image/upload/v1613035784/wr8myqidspxhxf8mdk3f.jpg",
+                        "show-license": true,
+                        "paymill-id": null,
+                        "keycode": 999999,
+                        "finish-at": "2021-03-11",
+                        "finished-at": "2021-02-16T17:57:43.099Z",
+                        "amount": "19.99",
+                        "total": "19.99"
+                    },
+                    "links": {
+                        "self": "/api/v1/subscriptions/971"
+                    },
+                    "relationships": {
+                        "user": {
+                            "data": {
+                                "type": "users",
+                                "id": "1681"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "164"
+                            }
+                        }
+                    }
+                }
+            }
+
+### Update parts of a subscription [PATCH]
+Allows for changes in some of a subscription attributes
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Request (application/json)
+    + Body
+
+            {
+                "subscription": {
+                    "attribute": "<VALUE>"
+                }
+            }
+
++ Response 200 (application/json)
+
+### Update all attributes of a subscription [PUT]
+Allows for a full change in a subscription attributes
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Request (application/json)
+    + Body
+
+            {
+                "subscription": {
+                    "actived": false,
+                    "created-at": "2021-02-11T09:29:05.157Z",
+                    "updated-at": "2021-02-16T17:57:43.111Z",
+                    "promotional-code": null,
+                    "license": "http://res.cloudinary.com/hrxua5b0v/image/upload/v1613035784/wr8myqidspxhxf8mdk3f.jpg",
+                    "show-license": true,
+                    "paymill-id": null,
+                    "keycode": 999999,
+                    "finish-at": "2021-03-11",
+                    "finished-at": "2021-02-16T17:57:43.099Z",
+                    "amount": "19.99",
+                    "total": "19.99"
+                }
+            }
+
++ Response 200 (application/json)
+
+### Delete subscription [DELETE]
+Remove a subscription from the server
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Response 200 (application/json)
+
+## Collection of subscriptions [/api/v1/users/{user_id}/subscriptions]
+Información relacionada con todas las suscripciones de un usuario.
+
+### Retrieve all subscriptions [GET]
+Returns information about a user subscriptions.
+
++ Parameters
+    + user_id (number) - ID del usuario
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [
+                    {
+                        "type": "subscriptions",
+                        "id": "971",
+                        "attributes": {
+                            "actived": false,
+                            "created-at": "2021-02-11T09:29:05.157Z",
+                            "updated-at": "2021-02-16T17:57:43.111Z",
+                            "promotional-code": null,
+                            "license": "http://res.cloudinary.com/hrxua5b0v/image/upload/v1613035784/wr8myqidspxhxf8mdk3f.jpg",
+                            "show-license": true,
+                            "paymill-id": null,
+                            "keycode": 161031,
+                            "finish-at": "2021-03-11",
+                            "finished-at": "2021-02-16T17:57:43.099Z",
+                            "amount": "19.99",
+                            "total": "19.99"
+                        },
+                        "links": {
+                            "self": "/api/v1/subscriptions/971"
+                        },
+                        "relationships": {
+                            "user": {
+                                "data": {
+                                    "type": "users",
+                                    "id": "1681"
+                                }
+                            },
+                            "space": {
+                                "data": {
+                                    "type": "spaces",
+                                    "id": "164"
+                                }
+                            }
+                        }
+                    },
+                    ...
+                ],
+                "included": [
+                    {...},
+                    ...
+                ]
+            }
+
+### Create a new subscription [POST /api/v1/subscriptions]
+Allows for the creation of a subscription.
+
++ Request (application/json)
+    + Body
+
+            {
+                "data":{
+                    "attributes":{
+                        "actived":false,
+                        "promotional-code":null,
+                        "finish-at":null,
+                        "finished-at":null,
+                        "license":null,
+                        "action-event":{
+                            "command":"assign-space",
+                            "data":{
+                                "parking-id":"28"
+                            }
+                        },
+                        "amount":null,
+                        "total":null
+                    },
+                    "type":"subscriptions"
+                }
+            }
+
++ Response 200 (application/json)
+
+# Group Transactions
+These objects relate to a payment order, with or without quantity. These payments are sent to a payment platform like Redsys, and the response will change these objects automatically.
+
+## Transaction [/api/v1/transactions/{transaction_id}]
++ Attributes (object)
+    + `url-ok` (string) - (Redsys) URL to return when a payment is successful
+    + `url-ko` (string) - (Redsys) URL to return when a payment failed for some reason
+    + `payment-token` (string) - Token to identify the payment
+    + signature (string) - Generated signature to send to Redsys and validate the order
+    + `error-code` (string) - Redsys error code for the order
+    + `error-description` (string) - Redsys error description
+    + success (boolean) - Whether a transaction was successful or not
+    + updated-at (string) - Timestamp for the last update
+
+### Retrieve a transaction [GET]
+Return a certain transaction given the ID
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "test": "OK"
+            }
+
+### Modify a transaction [PUT]
+Allows for a change in all attributes of a transaction
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
+    
++ Request (application/json)
+    + Body
+
+            {
+                "data": {
+                    "id": "1007",
+                    "attributes": {
+                        "url-ok": "<DOMAIN>/app/profile/license/1039",
+                        "url-ko": "<DOMAIN>/app/book/parking/28/subscription?trans=1007",
+                        "payment-token": "<TOKEN>",
+                        "signature": "<SIGNATURE>",
+                        "error-code": null,
+                        "error-description": null,
+                        "success": false,
+                        "action-event": {
+                            "command": "start-process",
+                            "data": {}
+                        }
+                    },
+                    "relationships": {
+                        "subscription": {
+                            "data": {
+                                "type":"subscriptions",
+                                "id":"1039"
+                            }
+                        },
+                        "credit-card": {
+                            "data": {
+                                "type":"credit-cards",
+                                "id":"675"
+                            }
+                        },
+                        "voucher": {
+                            "data":null
+                        }
+                    },
+                    "type":"transactions"
+                }
+            }
+
++ Response 200 (application/json)
+
+### Delete a transaction [DELETE]
+Removes a certain transaction from the database
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
+    
++ Response 200 (application/json)
+
+## Collection of transactions [/api/v1/transactions]
+These are the possibilities for a group of transactions.
+
+### Create a new transaction [POST]
+Allows for the creation of a new transaction.
+
++ Request (application/json)
+    + Body
+
+            {
+                "data": {
+                    "id": "1007",
+                    "attributes": {
+                        "url-ok": "<DOMAIN>/app/profile/license/1039",
+                        "url-ko": "<DOMAIN>/app/book/parking/28/subscription?trans=1007",
+                        "payment-token": "<TOKEN>",
+                        "signature": "<SIGNATURE>",
+                        "error-code": null,
+                        "error-description": null,
+                        "success": false,
+                        "action-event": {
+                            "command": "start-process",
+                            "data": {}
+                        }
+                    },
+                    "relationships": {
+                        "subscription": {
+                            "data": {
+                                "type":"subscriptions",
+                                "id":"1039"
+                            }
+                        },
+                        "credit-card": {
+                            "data": {
+                                "type":"credit-cards",
+                                "id":"675"
+                            }
+                        },
+                        "voucher": {
+                            "data":null
+                        }
+                    },
+                    "type":"transactions"
+                }
+            }
+
++ Response 200 (application/json)
+
+# Group Users
+This is the object that identifies a user in our application.
+
+## User [/api/v1/users/{user_id}]
++ Attributes (object)
+    + email (string) - User's email
+    + member (number) - Membership identification
+    + name (string) - Name of the user
+    + surname (string) - Surname(s) of the user
+    + phone (string) - Phone number for user
+    + address (string) - Address of residence of the user
+    + credits (string) - Number of credits stringified
+    + avatar (object) - Similar to image of parkings
+    + `expiration-close` (boolean) - Whether the expiration date is close for the user
+
+### Retrieve information for a user [GET]
+Retrieve the information for a given user.
+
++ Parameters
+    + user_id (number) - ID number for the user
+   
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": {
+                    "type": "users",
+                    "id": "<USER_ID>",
+                    "attributes": {
+                        "email": "<EMAIL>",
+                        "member": "1604",
+                        "name": "<NAME>",
+                        "surname": "<SURNAME>",
+                        "phone": "123456",
+                        "address": null,
+                        "credits": "50.0",
+                        "avatar": {
+                            "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                            },
+                            "avatar": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                                }
+                            }
+                        },
+                        "expiration-close": false
+                    },
+                    "links": {
+                        "self": "/api/v1/users/<USER_ID>"
+                    },
+                    "relationships": {
+                        "subscriptions": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/subscriptions",
+                                "related": "/api/v1/users/<USER_ID>/subscriptions"
+                            }
+                        },
+                        "credit-cards": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/credit-cards",
+                                "related": "/api/v1/users/<USER_ID>/credit-cards"
+                            }
+                        }
+                    }
+                }
+            }
+
+### Update some information for a user [PATCH]
+Update some of the information for the user.
+
++ Parameters
+    + user_id (number) - ID number for the user
+   
++ Request (application/json)
+    + Body
+   
+            {
+                "data": {
+                    "type": "users",
+                    "id": "<USER_ID>",
+                    "attributes": {
+                        "email": "<EMAIL>",
+                        "name": "<NAME>",
+                        "surname": "<SURNAME>",
+                        "phone": "123456",
+                        "address": null,
+                    },
+                    "links": {
+                        "self": "/api/v1/users/<USER_ID>"
+                    },
+                    "relationships": {
+                        "subscriptions": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/subscriptions",
+                                "related": "/api/v1/users/<USER_ID>/subscriptions"
+                            }
+                        },
+                        "credit-cards": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/credit-cards",
+                                "related": "/api/v1/users/<USER_ID>/credit-cards"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+
+### Update all the information for a user [PUT]
+Update all of the information for the user.
+
++ Parameters
+    + user_id (number) - ID number for the user
+   
++ Request (application/json)
+    + Body
+   
+            {
+                "data": {
+                    "type": "users",
+                    "id": "<USER_ID>",
+                    "attributes": {
+                        "email": "<EMAIL>",
+                        "member": "1604",
+                        "name": "<NAME>",
+                        "surname": "<SURNAME>",
+                        "phone": "123456",
+                        "address": null,
+                        "credits": "50.0",
+                        "avatar": {
+                            "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                            },
+                            "avatar": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                                }
+                            }
+                        },
+                        "expiration-close": false
+                    },
+                    "links": {
+                        "self": "/api/v1/users/<USER_ID>"
+                    },
+                    "relationships": {
+                        "subscriptions": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/subscriptions",
+                                "related": "/api/v1/users/<USER_ID>/subscriptions"
+                            }
+                        },
+                        "credit-cards": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/credit-cards",
+                                "related": "/api/v1/users/<USER_ID>/credit-cards"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+
+### Retrieve user subscriptions [GET /api/v1/users/{user_id}/subscriptions]
+Get all subscriptions for a given user.
+
++ Parameters
+    + user_id (number) - ID of the user
+
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "subscriptions",
+                        "id": "<SUBCRIPTION_ID>",
+                        "attributes": {
+                            ...
+                        },
+                        "links": {
+                            "self": "/api/v1/subscriptions/<SUBCRIPTION_ID>"
+                        },
+                        "relationships": {
+                            "user": {
+                                "data": {
+                                    "type": "users",
+                                    "id": "<USER_ID>"
+                                }
+                            },
+                            "space": {
+                                "data": {
+                                    "type": "spaces",
+                                    "id": "<SPACE_ID>"
+                                }
+                            }
+                        }
+                    },
+                    ...
+                ],
+                "included": [
+                    ...
+                ]
+            }
+
+           
+### Retrieve user credit cards [GET /api/v1/users/{user_id}/credit-card]
+Get the credit card object for a certain user.
+
++ Parameters
+    + user_id (number) - ID of the user
+   
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "credit-cards",
+                        "id": "<CREDIT_CARD_ID>",
+                        "attributes": {
+                            ...
+                        },
+                        "links": {
+                            "self": "/api/v1/credit-cards/<CREDIT_CARD_ID>"
+                        }
+                    }
+                ]
+            }
+
+### Update user avatar [POST /api/v1/users/{user_id}/update_avatar]
+Update the avatar for the user's profile.
+
++ Parameters
+    + user_id (number) - ID of the user
+
++ Request (image/png)
+
++ Response 200 (applicaton/json)
+    + Body
+   
+            {
+                "data": {
+                    "type": "users",
+                    "id": "<USER_ID>",
+                    "attributes": {
+                        "email": "<EMAIL>",
+                        "member": "1604",
+                        "name": "<NAME>",
+                        "surname": "<SURNAME>",
+                        "phone": "123456",
+                        "address": null,
+                        "credits": "50.0",
+                        "avatar": {
+                            "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                            },
+                            "avatar": {
+                                "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/thumb_bike.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/minithumb_bike.jpg"
+                                }
+                            }
+                        },
+                        "expiration-close": false
+                    },
+                    "links": {
+                        "self": "/api/v1/users/<USER_ID>"
+                    },
+                    "relationships": {
+                        "subscriptions": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/subscriptions",
+                                "related": "/api/v1/users/<USER_ID>/subscriptions"
+                            }
+                        },
+                        "credit-cards": {
+                            "links": {
+                                "self": "/api/v1/users/<USER_ID>/relationships/credit-cards",
+                                "related": "/api/v1/users/<USER_ID>/credit-cards"
+                            }
+                        }
+                    }
+                }
+            }
+
+## Collection of users [/api/v1/users]
+### Create a new user [POST /api/v1/registers]
+Endpoint to create a new user from the form. The attributes are the different fields in the registration form.
++ Request (application/json)
+    + Body
+            
+            {
+                "data": {
+                    "attributes": {
+                        "name": "<NAME>",
+                        "surname": "<SURNAMES>",
+                        "phone": "<PHONE NUMBER>",
+                        "email": "<EMAIL>",
+                        "email-confirmation": "<EMAIL>",
+                        "password": "<PASSWORD>",
+                        "password-confirmation": "<PASSWORD>",
+                        "accepted-policy": true,
+                        "accepted-share-data": true
+                    },
+                    "type": "registers"
+                }
+            }
+            
++ Response 200 (application/json)
+    + Body
+            
+            {}
+
+### Sign in with a user [POST /users/sign_in]
+Request to sign in as a user and get the session info in return.
++ Request (application/json)
+    + Headers
+        
+            Accept: application/json
+            
+    + Body
+            
+            {
+                "user": {
+                    "password": "<PASSWORD>",
+                    "email": "<EMAIL>"
+                }
+            }
+
++ Response 200 (application/json)
+    + Body
+            
+            {
+                "token": "<AUTHORIZATION HEADER TOKEN>",
+                "email": "<EMAIL>",
+                "user_id": <USER ID>
+            }
+
+
+# Group Vouchers
+Vouchers are PPU tokens.
+
+## Voucher [/api/v1/vouchers/{voucher_id}]
++ Attributes (object)
+    + amount (number) - Quantity of credits purchased
+    + `coupon-code` (string) - Whether a coupon code was used for this purchase
+    + `coupon-value` (string) - Result of the coupon applied to the purchase
+    + payed (boolean) - Whether it has been paid with a new credit card or not
+
+### Retrieve a Voucher [GET]
+Get the information from a certain voucher.
+
++ Parameters
+    + voucher_id (number) - ID for the voucher object
+   
++ Response 200 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "vouchers",
+                    "id": "<VOUCHER_ID>",
+                    "attributes": {
+                        "amount": "10.0",
+                        "coupon-code": null,
+                        "coupon-value": null,
+                        "payed": false
+                    },
+                    "links": {
+                        "self": "/api/v1/vouchers/<VOUCHER_ID>"
+                    }
+                }
+            }
+
+## Collection of Vouchers [/api/v1/vouchers]
+### Create a new voucher [POST]
+Create a new voucher object for PPU credits.
+
++ Request (application/json)
+    + Body
+   
+            {
+                "data": {
+                    "attributes": {
+                        "amount": 10,
+                        "coupon-code": null
+                    },
+                    "type": "vouchers"
+                }
+            }
+           
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": {
+                    "type": "vouchers",
+                    "id": "<VOUCHER_ID>",
+                    "attributes": {
+                        "amount": "10.0",
+                        "coupon-code": null,
+                        "coupon-value": null,
+                        "payed": false
+                    },
+                    "links": {
+                        "self": "/api/v1/vouchers/<VOUCHER_ID>"
+                    }
+                }
+            }
+
+# Group Bookings
+This are the resources associated to bookings of parking spaces.
+
+## Booking [/api/v1/bookings/{booking_id}]
++ Attributes (object)
+    + `created-at` (string) - Timestamp of creation of a booking
+    + `closed-at` (string) - Timestamp of cancellation of a booking
+    + price (string) - Price of the booking stringified
+    + space-code (string) - Number of the parking spot
+    + keycode (string) - In case of a numeric pad door, the keycode to access
+    + `booking-code` (string) - Code used to create the booking
+
+### Retrieve Booking information [GET]
+Get information for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Response 200 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "2017-09-16T11:32:45.519+02:00",
+                        "closed-at": "2017-09-16T11:33:21.503+02:00",
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                },
+                "included": [
+                    ...
+                ]
+            }
+
+### Modify partial information for a booking [PATCH]
+Modify some attributes for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Request (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200
+
+### Modify all the information for a booking [PUT]
+Modify all the information for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Request (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "2017-09-16T11:32:45.519+02:00",
+                        "closed-at": "2017-09-16T11:33:21.503+02:00",
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200
+
+### Delete a booking [DELETE]
+Delete a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Response 200
+
+## Collection of bookings [/api/v1/bookings]
+### Retrieve all bookings [GET]
+
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "bookings",
+                        "id": "<BOOKING_ID>",
+                        "attributes": {
+                            "created-at": "2017-09-16T11:32:45.519+02:00",
+                            "closed-at": "2017-09-16T11:33:21.503+02:00",
+                            "price": "0.5",
+                            "space-code": "75",
+                            "keycode": "1084777#"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "<PARKING_ID>"
+                                }
+                            },
+                            "space": {
+                                "data": {
+                                    "type": "spaces",
+                                    "id": "<BOOKING_ID>"
+                                }
+                            }
+                        }
+                    },
+                    ...
+                ],
+                "included": [
+                    ...
+                ]
+            }
+
+### Create a new booking [POST]
+
++ Request (application/json)
+    + Body
+       
+            {
+                "data": {
+                    "attributes": {
+                        "space-code": null,
+                        "closed-at": null,
+                        "price": null,
+                        "created-at": null,
+                        "booking-code": null,
+                        "keycode": null
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "user": {
+                            "data": {
+                                "type": "users",
+                                "id": "<USER_ID>"
+                            }
+                        }
+                    },
+                    "type": "bookings"
+                }
+            }
+
++ Response 201 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "<TIMESTAMP>",
+                        "closed-at": null,
+                        "price": "0.0",
+                        "space-code": "70",
+                        "keycode": "5357844#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<SPACE_ID>"
+                            }
+                        }
+                    }
+                },
+                "included": [
+                ...
+                ]
+            }
+
+# Group Notification
+## Bive Notification [POST /api/v1/bive/notification]
+This endpoint is used to send to the server the information regarding the result of a payment. Whenever a payment is finished, the information should be sent to the server to make the necessary changes to the subscriptions or the vouchers.
+
+**NOTE**: this is a sample for future conversation, and is subject to change.
+
++ Request (application/json)
+    + Body
+            
+            {
+                "payment-token": "<TOKEN>",
+                "signature": "<SIGNATURE>",
+                "code": null,
+                "description": null,
+                "success": true
+            }
+            
++ Response 200 (application/json)
