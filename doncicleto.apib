@@ -22,6 +22,265 @@ When making requests to the API, the server's response will have a determined fo
 
 Aside from the reponse format, every request done to the server will need a **public key** associated to the client.
 
+# Group Bikes
+Users can add bicycles to their profile.
+
+## Bike [/api/v1/bikes/{bike_id}]
++ Attributes (object)
+    + name (string) - Name of the bike
+    + brand (string) - Brand of the bike
+    + model (string) - Model of the bike
+    + photo (file) - Photo of the bike
+    + purchase_date (string) - Year of purchase
+    + price (string) - Price of the bike
+    + `created-at` (string) - Timestamp of creation of a bike
+    + `updated-at` (string) - Timestamp of update of a bike
+
+### Retrieve Bike information [GET]
+Get information for a given bike.
+
++ Parameters
+    + bike_id (number) - ID of the bike
+   
++ Response 200 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bikes",
+                    "id": "<BIKE_ID>",
+                    "attributes": {
+                        "user": {
+                            "id": <USER_ID>,
+                            "email": "pablobikes@doncicleto.com",
+                            "name": "Pablo",
+                            "surname": "Rosa Casado",
+                            "member": null,
+                            "address": "Calle de Peñafiel 17",
+                            "phone": "647816274",
+                            "avatar": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                }
+                            },
+                            "credits": "0.0"
+                        },
+                        "name": "Bici Azul",
+                        "brand": "VARIO",
+                        "model": "MX12",
+                        "photo": {
+                            "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/419/bici1.jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/419/thumb_bici1.jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/419/minithumb_bici1.jpg"
+                            }
+                        },
+                        "purchase-date": "2006",
+                        "price": "502.0"
+                    },
+                    "links": {
+                        "self": "/api/v1/bikes/<BIKE_ID>"
+                    }
+                }
+            }
+
+### Modify all the information for a bike [PUT]
+Modify all the information for a given bike.
+Using Content-Type: multipart/form-data.
+
++ Parameters
+    + bike_id (number) - ID of the bike
+   
++ Request (application/json)
+    + Body
+           
+            {
+                "name": "Bici Sava2",
+                "brand": "Sava",
+                "model": "RN122",
+                "photo": <FILE>,
+                "purchase-date": "2006",
+                "price": "502.0"
+            }
+
++ Response 200
+
+            {
+                "data": {
+                    "type": "bikes",
+                    "id": "<BIKE_ID>",
+                    "attributes": {
+                        "user": {
+                            "id": <USER_ID>,
+                            "email": "pablobikes@doncicleto.com",
+                            "name": "Pablo",
+                            "surname": "Rosa Casado",
+                            "member": null,
+                            "address": "Calle de Peñafiel 17",
+                            "phone": "647816274",
+                            "avatar": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                }
+                            },
+                            "credits": "0.0"
+                        },
+                        "name": "Bici Sava",
+                        "brand": "Sava",
+                        "model": "RN122",
+                        "photo": {
+                            "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/418/sava(2).jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/418/thumb_sava(2).jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/418/minithumb_sava(2).jpg"
+                            }
+                        },
+                        "purchase-date": "2006",
+                        "price": 502.0
+                    },
+                    "links": {
+                        "self": "/api/v1/bikes/<BIKE_ID>"
+                    }
+                }
+            }
+
+### Delete a bike [DELETE]
+Delete a given bike.
+
++ Parameters
+    + bike_id (number) - ID of the bike
+
++ Response 200
+
+## Collection of bikes [/api/v1/bikes]
+### Retrieve all bikes [GET]
+
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "bikes",
+                        "id": "<BIKE_ID>",
+                        "attributes": {
+                            "user": {
+                                "avatar": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
+                                    "thumb": {
+                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                    },
+                                    "minithumb": {
+                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                    }
+                                },
+                                "id": <USER_ID>,
+                                "email": "pablobikes@doncicleto.com",
+                                "name": "Pablo",
+                                "surname": "Rosa Casado",
+                                "member": null,
+                                "address": "Calle de Peñafiel 17",
+                                "phone": "647816274",
+                                "credits": "0.0"
+                            },
+                            "name": "Bici Azul",
+                            "brand": "BMW",
+                            "model": "XR 14",
+                            "photo": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/thumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/minithumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
+                                }
+                            },
+                            "purchase-date": "2018",
+                            "price": 2000.0
+                        },
+                        "links": {
+                            "self": "/api/v1/bikes/<BIKE_ID>"
+                        }
+                    },
+                    ...
+                ]
+            }
+
+### Create a new bike [POST]
+Using Content-Type: multipart/form-data.
+
++ Request (application/json)
+    + Body
+       
+            {
+                "name": "Bici Amarilla",
+                "brand": "Shimano",
+                "model": "Mountain X",
+                "photo": <FILE>,
+                "purchase-date": "2010",
+                "price": "540.0"
+            }
+
++ Response 201 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bikes",
+                    "id": "<BIKE_ID>",
+                    "attributes": {
+                        "user": {
+                            "id": <USER_ID>,
+                            "email": "pablobikes@doncicleto.com",
+                            "name": "Pablo",
+                            "surname": "Rosa Casado",
+                            "member": null,
+                            "address": "Calle de Peñafiel 17",
+                            "phone": "647816274",
+                            "avatar": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                }
+                            },
+                            "credits": "0.0"
+                        },
+                        "name": "Bici Amarilla",
+                        "brand": "Shimano",
+                        "model": "Mountain X",
+                        "photo": {
+                            "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/421/bici1.jpg",
+                            "thumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/421/thumb_bici1.jpg"
+                            },
+                            "minithumb": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/421/minithumb_bici1.jpg"
+                            }
+                        },
+                        "purchase-date": "2010",
+                        "price": 540.0
+                    },
+                    "links": {
+                        "self": "/api/v1/bikes/<BIKE_ID>"
+                    }
+                }
+            }
+
 # Group Bookings
 This are the resources associated to bookings of parking spaces.
 
