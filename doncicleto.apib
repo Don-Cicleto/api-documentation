@@ -30,7 +30,7 @@ Users can add bicycles to their profile.
     + name (string) - Name of the bike
     + brand (string) - Brand of the bike
     + model (string) - Model of the bike
-    + photo (file) - Photo of the bike
+    + photo (string) - Photo of the bike
     + purchase_date (string) - Year of purchase
     + price (string) - Price of the bike
     + `created-at` (string) - Timestamp of creation of a bike
@@ -164,60 +164,6 @@ Delete a given bike.
 
 + Response 200
 
-## Collection of bikes [/api/v1/bikes]
-### Retrieve all bikes [GET]
-
-+ Response 200 (application/json)
-    + Body
-   
-            {
-                "data": [
-                    {
-                        "type": "bikes",
-                        "id": "<BIKE_ID>",
-                        "attributes": {
-                            "user": {
-                                "avatar": {
-                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
-                                    "thumb": {
-                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
-                                    },
-                                    "minithumb": {
-                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
-                                    }
-                                },
-                                "id": <USER_ID>,
-                                "email": "pablobikes@doncicleto.com",
-                                "name": "Pablo",
-                                "surname": "Rosa Casado",
-                                "member": null,
-                                "address": "Calle de Peñafiel 17",
-                                "phone": "647816274",
-                                "credits": "0.0"
-                            },
-                            "name": "Bici Azul",
-                            "brand": "BMW",
-                            "model": "XR 14",
-                            "photo": {
-                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png",
-                                "thumb": {
-                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/thumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
-                                },
-                                "minithumb": {
-                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/minithumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
-                                }
-                            },
-                            "purchase-date": "2018",
-                            "price": 2000.0
-                        },
-                        "links": {
-                            "self": "/api/v1/bikes/<BIKE_ID>"
-                        }
-                    },
-                    ...
-                ]
-            }
-
 ### Create a new bike [POST]
 Using Content-Type: multipart/form-data.
 
@@ -279,6 +225,60 @@ Using Content-Type: multipart/form-data.
                         "self": "/api/v1/bikes/<BIKE_ID>"
                     }
                 }
+            }
+
+## Collection of bikes [/api/v1/bikes]
+### Retrieve all bikes [GET]
+
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "bikes",
+                        "id": "<BIKE_ID>",
+                        "attributes": {
+                            "user": {
+                                "avatar": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg",
+                                    "thumb": {
+                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/thumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                    },
+                                    "minithumb": {
+                                        "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/user/avatar/1/minithumb_rn_image_picker_lib_temp_44c32731-e450-4d62-acab-072cce7c70db.jpg"
+                                    }
+                                },
+                                "id": <USER_ID>,
+                                "email": "pablobikes@doncicleto.com",
+                                "name": "Pablo",
+                                "surname": "Rosa Casado",
+                                "member": null,
+                                "address": "Calle de Peñafiel 17",
+                                "phone": "647816274",
+                                "credits": "0.0"
+                            },
+                            "name": "Bici Azul",
+                            "brand": "BMW",
+                            "model": "XR 14",
+                            "photo": {
+                                "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png",
+                                "thumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/thumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
+                                },
+                                "minithumb": {
+                                    "url": "https://doncicleto.s3.eu-west-1.amazonaws.com/uploads/bike/foto/408/minithumb_Captura_de_pantalla_2020-12-14_a_las_6.30.05__2_.png"
+                                }
+                            },
+                            "purchase-date": "2018",
+                            "price": 2000.0
+                        },
+                        "links": {
+                            "self": "/api/v1/bikes/<BIKE_ID>"
+                        }
+                    },
+                    ...
+                ]
             }
 
 # Group Bookings
