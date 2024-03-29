@@ -22,6 +22,268 @@ When making requests to the API, the server's response will have a determined fo
 
 Aside from the reponse format, every request done to the server will need a **public key** associated to the client.
 
+# Group Bookings
+This are the resources associated to bookings of parking spaces.
+
+## Booking [/api/v1/bookings/{booking_id}]
++ Attributes (object)
+    + `created-at` (string) - Timestamp of creation of a booking
+    + `closed-at` (string) - Timestamp of cancellation of a booking
+    + price (string) - Price of the booking stringified
+    + space-code (string) - Number of the parking spot
+    + keycode (string) - In case of a numeric pad door, the keycode to access
+    + `booking-code` (string) - Code used to create the booking
+
+### Retrieve Booking information [GET]
+Get information for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Response 200 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "2017-09-16T11:32:45.519+02:00",
+                        "closed-at": "2017-09-16T11:33:21.503+02:00",
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                },
+                "included": [
+                    ...
+                ]
+            }
+
+### Modify partial information for a booking [PATCH]
+Modify some attributes for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Request (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200
+
+### Modify all the information for a booking [PUT]
+Modify all the information for a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+   
++ Request (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "2017-09-16T11:32:45.519+02:00",
+                        "closed-at": "2017-09-16T11:33:21.503+02:00",
+                        "price": "0.5",
+                        "space-code": "75",
+                        "keycode": "1084777#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<BOOKING_ID>"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200
+
+### Delete a booking [DELETE]
+Delete a given booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Response 200
+
+## Collection of bookings [/api/v1/bookings]
+### Retrieve all bookings [GET]
+
++ Response 200 (application/json)
+    + Body
+   
+            {
+                "data": [
+                    {
+                        "type": "bookings",
+                        "id": "<BOOKING_ID>",
+                        "attributes": {
+                            "created-at": "2017-09-16T11:32:45.519+02:00",
+                            "closed-at": "2017-09-16T11:33:21.503+02:00",
+                            "price": "0.5",
+                            "space-code": "75",
+                            "keycode": "1084777#"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "<PARKING_ID>"
+                                }
+                            },
+                            "space": {
+                                "data": {
+                                    "type": "spaces",
+                                    "id": "<BOOKING_ID>"
+                                }
+                            }
+                        }
+                    },
+                    ...
+                ],
+                "included": [
+                    ...
+                ]
+            }
+
+### Create a new booking [POST]
+
++ Request (application/json)
+    + Body
+       
+            {
+                "data": {
+                    "attributes": {
+                        "space-code": null,
+                        "closed-at": null,
+                        "price": null,
+                        "created-at": null,
+                        "booking-code": null,
+                        "keycode": null
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "user": {
+                            "data": {
+                                "type": "users",
+                                "id": "<USER_ID>"
+                            }
+                        }
+                    },
+                    "type": "bookings"
+                }
+            }
+
++ Response 201 (application/json)
+    + Body
+           
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "<TIMESTAMP>",
+                        "closed-at": null,
+                        "price": "0.0",
+                        "space-code": "70",
+                        "keycode": "5357844#"
+                    },
+                    "relationships": {
+                        "parking": {
+                            "data": {
+                                "type": "parkings",
+                                "id": "<PARKING_ID>"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "<SPACE_ID>"
+                            }
+                        }
+                    }
+                },
+                "included": [
+                ...
+                ]
+            }
+
+# Group Notification
+## Bive Notification [POST /api/v1/bive/notification]
+This endpoint is used to send to the server the information regarding the result of a payment. Whenever a payment is finished, the information should be sent to the server to make the necessary changes to the subscriptions or the vouchers.
+
+**NOTE**: this is a sample for future conversation, and is subject to change.
+
++ Request (application/json)
+    + Body
+            
+            {
+                "payment-token": "<TOKEN>",
+                "signature": "<SIGNATURE>",
+                "code": null,
+                "description": null,
+                "success": true
+            }
+            
++ Response 200 (application/json)
+
 # Group Parkings
 A parking is a specific lovation in which Don Cicleto keeps user's bicycles.
 
@@ -991,265 +1253,3 @@ Create a new voucher object for PPU credits.
                     }
                 }
             }
-
-# Group Bookings
-This are the resources associated to bookings of parking spaces.
-
-## Booking [/api/v1/bookings/{booking_id}]
-+ Attributes (object)
-    + `created-at` (string) - Timestamp of creation of a booking
-    + `closed-at` (string) - Timestamp of cancellation of a booking
-    + price (string) - Price of the booking stringified
-    + space-code (string) - Number of the parking spot
-    + keycode (string) - In case of a numeric pad door, the keycode to access
-    + `booking-code` (string) - Code used to create the booking
-
-### Retrieve Booking information [GET]
-Get information for a given booking.
-
-+ Parameters
-    + booking_id (number) - ID of the booking
-   
-+ Response 200 (application/json)
-    + Body
-           
-            {
-                "data": {
-                    "type": "bookings",
-                    "id": "<BOOKING_ID>",
-                    "attributes": {
-                        "created-at": "2017-09-16T11:32:45.519+02:00",
-                        "closed-at": "2017-09-16T11:33:21.503+02:00",
-                        "price": "0.5",
-                        "space-code": "75",
-                        "keycode": "1084777#"
-                    },
-                    "relationships": {
-                        "parking": {
-                            "data": {
-                                "type": "parkings",
-                                "id": "<PARKING_ID>"
-                            }
-                        },
-                        "space": {
-                            "data": {
-                                "type": "spaces",
-                                "id": "<BOOKING_ID>"
-                            }
-                        }
-                    }
-                },
-                "included": [
-                    ...
-                ]
-            }
-
-### Modify partial information for a booking [PATCH]
-Modify some attributes for a given booking.
-
-+ Parameters
-    + booking_id (number) - ID of the booking
-   
-+ Request (application/json)
-    + Body
-           
-            {
-                "data": {
-                    "type": "bookings",
-                    "id": "<BOOKING_ID>",
-                    "attributes": {
-                        "price": "0.5",
-                        "space-code": "75",
-                        "keycode": "1084777#"
-                    },
-                    "relationships": {
-                        "parking": {
-                            "data": {
-                                "type": "parkings",
-                                "id": "<PARKING_ID>"
-                            }
-                        },
-                        "space": {
-                            "data": {
-                                "type": "spaces",
-                                "id": "<BOOKING_ID>"
-                            }
-                        }
-                    }
-                }
-            }
-
-+ Response 200
-
-### Modify all the information for a booking [PUT]
-Modify all the information for a given booking.
-
-+ Parameters
-    + booking_id (number) - ID of the booking
-   
-+ Request (application/json)
-    + Body
-           
-            {
-                "data": {
-                    "type": "bookings",
-                    "id": "<BOOKING_ID>",
-                    "attributes": {
-                        "created-at": "2017-09-16T11:32:45.519+02:00",
-                        "closed-at": "2017-09-16T11:33:21.503+02:00",
-                        "price": "0.5",
-                        "space-code": "75",
-                        "keycode": "1084777#"
-                    },
-                    "relationships": {
-                        "parking": {
-                            "data": {
-                                "type": "parkings",
-                                "id": "<PARKING_ID>"
-                            }
-                        },
-                        "space": {
-                            "data": {
-                                "type": "spaces",
-                                "id": "<BOOKING_ID>"
-                            }
-                        }
-                    }
-                }
-            }
-
-+ Response 200
-
-### Delete a booking [DELETE]
-Delete a given booking.
-
-+ Parameters
-    + booking_id (number) - ID of the booking
-
-+ Response 200
-
-## Collection of bookings [/api/v1/bookings]
-### Retrieve all bookings [GET]
-
-+ Response 200 (application/json)
-    + Body
-   
-            {
-                "data": [
-                    {
-                        "type": "bookings",
-                        "id": "<BOOKING_ID>",
-                        "attributes": {
-                            "created-at": "2017-09-16T11:32:45.519+02:00",
-                            "closed-at": "2017-09-16T11:33:21.503+02:00",
-                            "price": "0.5",
-                            "space-code": "75",
-                            "keycode": "1084777#"
-                        },
-                        "relationships": {
-                            "parking": {
-                                "data": {
-                                    "type": "parkings",
-                                    "id": "<PARKING_ID>"
-                                }
-                            },
-                            "space": {
-                                "data": {
-                                    "type": "spaces",
-                                    "id": "<BOOKING_ID>"
-                                }
-                            }
-                        }
-                    },
-                    ...
-                ],
-                "included": [
-                    ...
-                ]
-            }
-
-### Create a new booking [POST]
-
-+ Request (application/json)
-    + Body
-       
-            {
-                "data": {
-                    "attributes": {
-                        "space-code": null,
-                        "closed-at": null,
-                        "price": null,
-                        "created-at": null,
-                        "booking-code": null,
-                        "keycode": null
-                    },
-                    "relationships": {
-                        "parking": {
-                            "data": {
-                                "type": "parkings",
-                                "id": "<PARKING_ID>"
-                            }
-                        },
-                        "user": {
-                            "data": {
-                                "type": "users",
-                                "id": "<USER_ID>"
-                            }
-                        }
-                    },
-                    "type": "bookings"
-                }
-            }
-
-+ Response 201 (application/json)
-    + Body
-           
-            {
-                "data": {
-                    "type": "bookings",
-                    "id": "<BOOKING_ID>",
-                    "attributes": {
-                        "created-at": "<TIMESTAMP>",
-                        "closed-at": null,
-                        "price": "0.0",
-                        "space-code": "70",
-                        "keycode": "5357844#"
-                    },
-                    "relationships": {
-                        "parking": {
-                            "data": {
-                                "type": "parkings",
-                                "id": "<PARKING_ID>"
-                            }
-                        },
-                        "space": {
-                            "data": {
-                                "type": "spaces",
-                                "id": "<SPACE_ID>"
-                            }
-                        }
-                    }
-                },
-                "included": [
-                ...
-                ]
-            }
-
-# Group Notification
-## Bive Notification [POST /api/v1/bive/notification]
-This endpoint is used to send to the server the information regarding the result of a payment. Whenever a payment is finished, the information should be sent to the server to make the necessary changes to the subscriptions or the vouchers.
-
-**NOTE**: this is a sample for future conversation, and is subject to change.
-
-+ Request (application/json)
-    + Body
-            
-            {
-                "payment-token": "<TOKEN>",
-                "signature": "<SIGNATURE>",
-                "code": null,
-                "description": null,
-                "success": true
-            }
-            
-+ Response 200 (application/json)
