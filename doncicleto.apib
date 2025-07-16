@@ -417,6 +417,155 @@ Delete a given booking.
 
 + Response 200
 
+### Assign a New Space to a Booking [POST /api/v1/bookings/{booking_id}/new_space]
+Assign a new available space to an existing booking. Only the booking owner can perform this action.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Response 201 (application/json)
+    + Body
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "<TIMESTAMP>",
+                        "closed-at": null,
+                        "price": "0.0",
+                        "space-code": "70",
+                        "keycode": "5357844#"
+                    },
+                    "relationships": {
+                        "parking": { "data": { "type": "parkings", "id": "<PARKING_ID>" } },
+                        "space": { "data": { "type": "spaces", "id": "<SPACE_ID>" } }
+                    }
+                }
+            }
++ Response 403 (application/json)
+    + Body
+            { "user": "not_authorized" }
++ Response 404 (application/json)
+    + Body
+            { "booking": "not_found" }
++ Response 422 (application/json)
+    + Body
+            { "parking": "not_spaces" }
+
+### Close a Booking [POST /api/v1/bookings/{booking_id}/close]
+Close an open booking. This will release the space and finalize the booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Response 200 (application/json)
+    + Body
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "closed-at": "<TIMESTAMP>",
+                        "price": "0.0",
+                        "space-code": "70",
+                        "keycode": "5357844#"
+                    },
+                    "relationships": {
+                        "parking": { "data": { "type": "parkings", "id": "<PARKING_ID>" } },
+                        "space": { "data": { "type": "spaces", "id": "<SPACE_ID>" } }
+                    }
+                }
+            }
++ Response 403 (application/json)
+    + Body
+            { "errors": [{ "title": "Access denied", "detail": "You do not have access to this resource" }] }
++ Response 404 (application/json)
+    + Body
+            { "booking": "not_found" }
++ Response 422 (application/json)
+    + Body
+            { "booking": "already_closed" }
+
+### Get Free Spaces for Bookings [GET /api/v1/bookings/free_spaces]
+Retrieve a list of free spaces available for bookings for the current user.
+
++ Parameters
+    + id (number, optional) - Parking ID (if required by implementation)
+
++ Response 200 (application/json)
+    + Body
+            {
+                "data": [
+                    {
+                        "type": "spaces",
+                        "id": "<SPACE_ID>",
+                        "attributes": {
+                            "fixed": false,
+                            "number": "12",
+                            "reserved": false
+                        },
+                        "relationships": {
+                            "parking": { "data": { "type": "parkings", "id": "<PARKING_ID>" } }
+                        }
+                    }
+                ]
+            }
++ Response 200 (application/json)
+    + Body
+            { "error": "No free spaces available" }
++ Response 400/404/500 (application/json)
+    + Body
+            { "error": "<error message>", "message": "<details>" }
+
+### Update the Space of a Booking [PATCH /api/v1/bookings/{booking_id}/update_space]
+Change the assigned space of an existing booking.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Request (application/json)
+    + Body
+            {
+                "data": {
+                    "attributes": {
+                        "action-event": {
+                            "command": "update-space",
+                            "data": {
+                                "parking-id": "<PARKING_ID>",
+                                "space-id": "<NEW_SPACE_ID>"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+    + Body
+            {
+                "data": {
+                    "type": "bookings",
+                    "id": "<BOOKING_ID>",
+                    "attributes": {
+                        "created-at": "<TIMESTAMP>",
+                        "closed-at": null,
+                        "price": "0.0",
+                        "space-code": "70",
+                        "keycode": "5357844#"
+                    },
+                    "relationships": {
+                        "parking": { "data": { "type": "parkings", "id": "<PARKING_ID>" } },
+                        "space": { "data": { "type": "spaces", "id": "<SPACE_ID>" } }
+                    }
+                }
+            }
+
++ Response 404 (application/json)
+    + Body
+            { "error": "No available or not a free space with ID <space_id>" }
++ Response 403 (application/json)
+    + Body
+            { "errors": [{ "title": "Access denied", "detail": "You do not have access to this resource" }] }
+
 ## Collection of bookings [/api/v1/bookings]
 ### Retrieve all bookings [GET]
 
@@ -1511,4 +1660,58 @@ Create a new voucher object for PPU credits.
                         "self": "/api/v1/vouchers/<VOUCHER_ID>"
                     }
                 }
+            }
+
+# Group Payments
+
+## Generate Braintree Token [POST /api/v1/payments/generate_token]
++ Response 200 (application/json)
+    + Body
+            { "token": "<BRAINTREE_TOKEN>" }
+
+## Validate Coupon [POST /api/v1/payments/coupon]
++ Request (application/json)
+    + Body
+            { "code": "COUPON2024" }
++ Response 200 (application/json)
+    + Body
+            { "code": "COUPON2024", "isValid": true, "discount": 10 }
++ Response 404 (application/json)
+    + Body
+            { "code": "COUPON2024", "isValid": false, "discount": "" }
+
+## Braintree Checkout [POST /api/v1/payments/checkout]
++ Request (application/json)
+    + Body
+            { "voucher_id": "<VOUCHER_ID>", "nonce": "<NONCE>", "credit_card_id": "<CREDIT_CARD_ID>" }
++ Response 200 (application/json)
+    + Body
+            { "result": { ... } }
++ Response 422 (application/json)
+    + Body
+            { "errors": ["Error: ..."] }
+
+# Group Mobile Payments
+
+## Create Stripe Checkout Session [POST /api/v1/mobile_payments/create_checkout_session]
++ Request (application/json)
+    + Body
+            { "provider": "stripe", "platform": "ios", "success_url": "https://...", "cancel_url": "https://..." }
++ Response 200 (application/json)
+    + Body
+            {
+                "success": true,
+                "checkout_url": "https://checkout.stripe.com/...",
+                "transaction_id": "<TRANSACTION_ID>",
+                "provider": "stripe",  
+                "requires_action": true
+            }
++ Response 200 (application/json)
+    + Body
+            {
+                "success": true,
+                "transaction_id": "<TRANSACTION_ID>",
+                "provider": "stripe",
+                "status": "succeeded",  
+                "requires_action": false
             }
