@@ -6,6 +6,182 @@ This document reports Don Cicleto API.
 
 NOTE: This document is **in progress**.
 
+## Authentication & Authorization
+
+### Authentication Methods
+
+The Don Cicleto API uses token-based authentication for mobile applications. All authenticated requests must include the authentication token in the request headers.
+
+#### Authentication Token
+```
+Authorization: Token token=<USER_AUTH_TOKEN>
+```
+
+#### Required Headers
+All API requests must include the following headers:
+- `Content-Type: application/json`
+- `Authorization: Token token=<USER_AUTH_TOKEN>`
+
+#### Authentication Flow
+1. User provides credentials (email/password)
+2. System validates credentials and returns authentication token
+3. Client stores token and includes it in all subsequent requests
+4. Token is automatically generated when user account is created
+
+### Authorization Levels
+
+The system uses Rolify gem for role management. For mobile API access, only specific roles are exposed for security reasons:
+
+#### **user** (Default Role)
+- Default role assigned automatically to new users
+- Access to core mobile app functionalities:
+  - Profile management
+  - Bookings (reservations)
+  - Subscriptions
+  - Credit cards
+  - Bicycle management
+
+#### **maintenance** (Special Role)
+- Special role for maintenance operations
+- Access to maintenance-specific functionalities from mobile app
+- Enhanced permissions for system maintenance tasks
+
+**Note**: Administrative roles (super_admin, owner, admin, read_only, partner_basic, partner_advanced) are not exposed in the mobile API for security and separation of responsibilities.
+
+### Multi-Tenancy
+
+The system supports multi-tenancy. Administrative roles have different scopes:
+- `super_admin`: Complete access across all tenants
+- `owner`: Full access within their specific tenant
+- `admin`: Administrative permissions within tenant boundaries
+
+### Error Responses
+
+Authentication and authorization errors return standard HTTP status codes:
+
+#### **401 Unauthorized**
+- Missing or invalid authentication token
+- Expired authentication session
+
+```json
+{
+  "error": "Unauthorized access",
+  "message": "Invalid or missing authentication token"
+}
+```
+
+#### **403 Forbidden**
+- Valid authentication but insufficient permissions
+- Access denied to specific resource
+
+```json
+{
+  "errors": [
+    {
+      "title": "Access denied",
+      "detail": "You do not have access to this resource"
+    }
+  ]
+}
+```
+
+### Security Best Practices
+
+1. **Token Storage**: Store authentication tokens securely on mobile devices
+2. **Token Transmission**: Always use HTTPS for API communications
+3. **Role Separation**: Administrative roles are not exposed in mobile API
+4. **Permission Checks**: Each endpoint validates user permissions based on assigned roles
+5. **Automatic Token Generation**: Authentication tokens are generated automatically upon user creation
+
+## Error Handling & Validation
+
+### HTTP Status Codes Used
+
+- `200 OK`: Successful operations
+- `201 Created`: Resource creation (bookings, subscriptions)
+- `400 Bad Request`: Missing required parameters
+- `403 Forbidden`: Unauthorized access or insufficient permissions
+- `404 Not Found`: Resource not found
+- `422 Unprocessable Entity`: Validation errors
+- `503 Service Unavailable`: External API failures
+
+### Error Response Format
+
+Standard JSON error format used throughout the API:
+
+```json
+{
+  "errors": [
+    {
+      "title": "Error title",
+      "detail": "Error details",
+      "source": {
+        "pointer": "data/attributes/field-name"
+      }
+    }
+  ]
+}
+```
+
+Simple error format:
+```json
+{
+  "error": "Error message"
+}
+```
+
+### Validation Rules
+
+#### **User Validations**
+- `email`: Required, unique per tenant, valid email format
+- `password`: Required with confirmation, minimum length per Devise configuration
+- `email_confirmation`: Required on user creation
+- **Partner roles**: Must have at least one parking assigned (error: "debe tener al menos un parking seleccionado")
+
+#### **Booking Validations**
+- `parking_id`: Required
+- `user_id`: Required
+- `space_id`: Required
+
+#### **Subscription Validations**
+- `plan_id`: Required
+- `user_id`: Required
+
+#### **Parking Validations**
+- `parking_type`: Must be between 1-6
+- `door_type`: Must be between 0-6
+- `lock_mac`: Required if door type is Bluetooth
+- `lock_id`: Required if door type is Omnitec
+- `uab_apikey`, `uab_expiration`: Required if door type is UpAndBike
+- `southco_access_code`: Required if door type is Southco
+- `ppu_splits`: Must be valid JSON with numeric keys and values
+
+#### **Credit Card Validations**
+- `provider`: Required
+- `merchant_identifier`: Must be unique per provider and user
+
+### Common Business Logic Errors
+
+#### **Booking Errors**
+```json
+{ "error": "Parkins has not free spaces" }
+```
+```json
+{ "error": "You already have an ongoing booking" }
+```
+```json
+{ "error": "User not found" }
+```
+
+#### **Payment Errors**
+```json
+{ "error": "Active credit card not found" }
+```
+
+### Multi-Tenant Validation
+
+All models use tenant scoping (`acts_as_tenant`). Data access is automatically scoped by tenant, and attempting to access resources outside the user's tenant will result in 404 or 403 errors.
+
 # API Structure
 When making requests to the API, the server's response will have a determined format. The following shows the schema of the responses.
 
@@ -417,7 +593,7 @@ Delete a given booking.
 
 + Response 200
 
-### Assign a New Space to a Booking [POST /api/v1/bookings/{booking_id}/new_space]
+### Assign a New Space to a Booking [GET /api/v1/bookings/{booking_id}/new_space]
 Assign a new available space to an existing booking. Only the booking owner can perform this action.
 
 + Parameters
@@ -452,7 +628,7 @@ Assign a new available space to an existing booking. Only the booking owner can 
     + Body
             { "parking": "not_spaces" }
 
-### Close a Booking [POST /api/v1/bookings/{booking_id}/close]
+### Close a Booking [PUT /api/v1/bookings/{booking_id}/close]
 Close an open booking. This will release the space and finalize the booking.
 
 + Parameters
@@ -517,7 +693,7 @@ Retrieve a list of free spaces available for bookings for the current user.
     + Body
             { "error": "<error message>", "message": "<details>" }
 
-### Update the Space of a Booking [PATCH /api/v1/bookings/{booking_id}/update_space]
+### Update the Space of a Booking [PUT /api/v1/bookings/{booking_id}/update_space]
 Change the assigned space of an existing booking.
 
 + Parameters
@@ -538,7 +714,6 @@ Change the assigned space of an existing booking.
                     }
                 }
             }
-
 + Response 200 (application/json)
     + Body
             {
@@ -558,13 +733,85 @@ Change the assigned space of an existing booking.
                     }
                 }
             }
-
 + Response 404 (application/json)
     + Body
             { "error": "No available or not a free space with ID <space_id>" }
 + Response 403 (application/json)
     + Body
             { "errors": [{ "title": "Access denied", "detail": "You do not have access to this resource" }] }
+
+### Get Free Spaces for Specific Booking [GET /api/v1/bookings/{booking_id}/free_spaces]
+Retrieve available spaces for a specific booking. This endpoint is used when a booking needs to be reassigned to a different space.
+
++ Parameters
+    + booking_id (number) - ID of the booking
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": [
+                    {
+                        "type": "spaces",
+                        "id": "45",
+                        "attributes": {
+                            "fixed": false,
+                            "number": "12",
+                            "reserved": false,
+                            "available": true,
+                            "parking-id": "23"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "23"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "spaces",
+                        "id": "46",
+                        "attributes": {
+                            "fixed": false,
+                            "number": "13",
+                            "reserved": false,
+                            "available": true,
+                            "parking-id": "23"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "23"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+
++ Response 404 (application/json)
+    + Body
+    
+            {
+                "errors": [
+                    {
+                        "title": "Booking not found",
+                        "detail": "The booking could not be found or you don't have access to it",
+                        "status": "404"
+                    }
+                ]
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": [],
+                "message": "No free spaces available for this booking"
+            }
 
 ## Collection of bookings [/api/v1/bookings]
 ### Retrieve all bookings [GET]
@@ -692,6 +939,37 @@ This endpoint is used to send to the server the information regarding the result
             
 + Response 200 (application/json)
 
+# Group Spaces
+
+## Space Notification [/api/v1/spaces/{space_id}/notify-iclotet]
+### Notify iClotet System [GET]
+Send notification to the iClotet system about space status. This endpoint is used for integration with external parking management systems.
+
++ Parameters
+    + space_id (number) - ID of the space
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "message": "Notification sent successfully",
+                "space_id": "45",
+                "timestamp": "2024-07-16T15:30:00Z"
+            }
+
++ Response 404 (application/json)
+    + Body
+    
+            {
+                "errors": [
+                    {
+                        "title": "Not found",
+                        "detail": "Space not found"
+                    }
+                ]
+            }
+
 # Group Parkings
 A parking is a specific lovation in which Don Cicleto keeps user's bicycles.
 
@@ -726,6 +1004,14 @@ A parking is a specific lovation in which Don Cicleto keeps user's bicycles.
         + image (object) - Copy of the same object (legacy)
     + `free-spaces` (number) - Number of free spaces in a parking
     + `month-price` (number) - Monthly price for a parking
+    + `battery-level` (number) - Battery level percentage for smart lock system
+    + `battery-level-updated-at` (string) - Timestamp of last battery level update
+    + `access-control` (boolean) - Whether access control is enabled
+    + `charging-point` (boolean) - Whether the parking has a charging point
+    + `smart-lock` (boolean) - Whether the parking has smart lock technology
+    + `spot-type` (string) - Type of parking spot (covered, outdoor, etc.)
+    + `ppu-price-splits` (object) - Pay-per-use pricing structure
+    + `can-use` (boolean) - Whether the current user can use this parking
 
 ### Retrieve information about a parking [GET]
 This endpoint allows requests to get information about a parking.
@@ -785,7 +1071,18 @@ This endpoint allows requests to get information about a parking.
                             }
                         },
                         "free-spaces": 1,
-                        "month-price": null
+                        "month-price": null,
+                        "battery-level": 85,
+                        "battery-level-updated-at": "2024-07-16T15:30:00Z",
+                        "access-control": true,
+                        "charging-point": false,
+                        "smart-lock": true,
+                        "spot-type": "covered",
+                        "ppu-price-splits": {
+                            "first-hour": 1.5,
+                            "additional-hours": 1.0
+                        },
+                        "can-use": true
                     },
                     "links": {
                         "self": "/api/v1/parkings/23"
@@ -818,6 +1115,94 @@ In case a parking has a Bluetooth lock, the lock will be unlocked.
                 },
                 "token": "TOKEN_HERE",
                 "request": "unlock"
+            }
+
+### Get iLOQ Security Code [GET /api/v1/parkings/{parking_id}/iloq_security]
+Retrieve the iLOQ security code for accessing smart locks. This endpoint is used for parkings with iLOQ integration.
+
++ Parameters
+    + parking_id (number) - Identification number for a parking
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "result": "success",
+                "message": "Security code retrieved successfully",
+                "error_code": 0,
+                "data": {
+                    "security_code": "123456",
+                    "expires_at": "2024-07-16T20:00:00Z",
+                    "lock_id": "iloq_lock_123"
+                },
+                "request": "iloq_security"
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "result": "error",
+                "message": "Parking not found or iLOQ not configured",
+                "error_code": 404,
+                "data": null,
+                "request": "iloq_security"
+            }
+
++ Response 403 (application/json)
+    + Body
+
+            {
+                "result": "error",
+                "message": "User does not have access to this parking",
+                "error_code": 403,
+                "data": null,
+                "request": "iloq_security"
+            }
+
+### Update Battery Level [POST /api/v1/parkings/{parking_id}/battery_level]
+Update the battery level for a parking's smart lock system. This endpoint is used by IoT devices to report battery status.
+
++ Parameters
+    + parking_id (number) - Identification number for a parking
+
++ Request (application/json)
+    + Body
+
+            {
+                "battery_level": 85,
+                "device_id": "sensor_123",
+                "timestamp": "2024-07-16T15:30:00Z"
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "result": "success",
+                "message": "Battery level updated successfully",
+                "error_code": 0,
+                "data": {
+                    "battery_level": 85,
+                    "updated_at": "2024-07-16T15:30:00Z",
+                    "status": "good"
+                },
+                "request": "battery_level"
+            }
+
++ Response 422 (application/json)
+    + Body
+
+            {
+                "result": "error",
+                "message": "Invalid battery level data",
+                "error_code": 422,
+                "data": {
+                    "errors": [
+                        "Battery level must be between 0 and 100"
+                    ]
+                },
+                "request": "battery_level"
             }
 
 
@@ -1009,6 +1394,169 @@ Remove a subscription from the server
 
 + Response 200 (application/json)
 
+### Get Free Fixed Spaces for Subscription [GET /api/v1/subscriptions/{subscription_id}/free_spaces]
+Retrieve available fixed spaces for a subscription. This endpoint is used when a subscription needs to be assigned to a different space.
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [
+                    {
+                        "type": "spaces",
+                        "id": "67",
+                        "attributes": {
+                            "fixed": true,
+                            "number": "A-15",
+                            "reserved": false,
+                            "available": true,
+                            "parking-id": "28"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "28"
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "type": "spaces",
+                        "id": "68",
+                        "attributes": {
+                            "fixed": true,
+                            "number": "A-16",
+                            "reserved": false,
+                            "available": true,
+                            "parking-id": "28"
+                        },
+                        "relationships": {
+                            "parking": {
+                                "data": {
+                                    "type": "parkings",
+                                    "id": "28"
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "errors": [
+                    {
+                        "title": "Subscription not found",
+                        "detail": "The subscription could not be found or you don't have access to it",
+                        "status": "404"
+                    }
+                ]
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": [],
+                "message": "No free fixed spaces available for this subscription"
+            }
+
+### Update Subscription Space [PUT /api/v1/subscriptions/{subscription_id}/update_space]
+Change the assigned space of an existing subscription. This allows users to move their subscription to a different parking space.
+
++ Parameters
+    + subscription_id (number) - Identification number for a subscription
+
++ Request (application/json)
+    + Body
+
+            {
+                "data": {
+                    "attributes": {
+                        "action-event": {
+                            "command": "update-space",
+                            "data": {
+                                "parking-id": "28",
+                                "space-id": "67"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+    + Body
+
+            {
+                "data": {
+                    "type": "subscriptions",
+                    "id": "971",
+                    "attributes": {
+                        "actived": true,
+                        "created-at": "2024-01-15T09:29:05.157Z",
+                        "updated-at": "2024-07-16T15:45:00.000Z",
+                        "promotional-code": null,
+                        "license": "http://res.cloudinary.com/hrxua5b0v/image/upload/v1705312784/license_971.jpg",
+                        "show-license": true,
+                        "paymill-id": null,
+                        "keycode": 161031,
+                        "finish-at": "2024-08-15",
+                        "finished-at": null,
+                        "amount": "19.99",
+                        "total": "19.99"
+                    },
+                    "links": {
+                        "self": "/api/v1/subscriptions/971"
+                    },
+                    "relationships": {
+                        "user": {
+                            "data": {
+                                "type": "users",
+                                "id": "1681"
+                            }
+                        },
+                        "space": {
+                            "data": {
+                                "type": "spaces",
+                                "id": "67"
+                            }
+                        }
+                    }
+                }
+            }
+
++ Response 404 (application/json)
+    + Body
+
+            {
+                "errors": [
+                    {
+                        "title": "Space not available",
+                        "detail": "The requested space is not available or not found",
+                        "status": "404"
+                    }
+                ]
+            }
+
++ Response 403 (application/json)
+    + Body
+
+            {
+                "errors": [
+                    {
+                        "title": "Access denied",
+                        "detail": "You do not have access to this subscription",
+                        "status": "403"
+                    }
+                ]
+            }
+
 ## Collection of subscriptions [/api/v1/users/{user_id}/subscriptions]
 Información relacionada con todas las suscripciones de un usuario.
 
@@ -1175,6 +1723,101 @@ Removes a certain transaction from the database
 
 + Parameters
     + transaction_id (number) - Transaction identifying number
+
++ Response 204
+
+## Additional Transaction Actions [/api/v1/transactions]
+### Create transaction [POST]
+Create a new transaction for processing payments or vouchers. This endpoint maps to `create_transaction` action.
+
++ Request (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "transactions", 
+                    "attributes": {
+                        "amount": "15.00",
+                        "payment_method": "stripe",
+                        "voucher_id": "123",
+                        "description": "Credit purchase"
+                    }
+                }
+            }
+
++ Response 201 (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "transactions",
+                    "id": "456",
+                    "attributes": {
+                        "amount": "15.00",
+                        "status": "pending",
+                        "payment_method": "stripe",
+                        "created_at": "2024-07-16T15:30:00Z",
+                        "voucher_id": "123"
+                    }
+                }
+            }
+
+## Transaction Storage [/api/v1/transactions/{transaction_id}]
+### Store transaction [DELETE]
+Store or finalize a transaction. This endpoint maps to the `store` action despite using DELETE method.
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "transactions",
+                    "id": "456",
+                    "attributes": {
+                        "status": "stored",
+                        "stored_at": "2024-07-16T15:35:00Z"
+                    }
+                }
+            }
+
+### Start process [PUT]
+Start the payment processing for a transaction. This endpoint maps to the `start_process` action.
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
+
++ Request (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "transactions",
+                    "attributes": {
+                        "action": "start_process"
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "transactions",
+                    "id": "456",
+                    "attributes": {
+                        "status": "processing",
+                        "process_started_at": "2024-07-16T15:40:00Z",
+                        "payment_url": "https://payment.gateway.com/process/456"
+                    }
+                }
+            }
+
++ Parameters
+    + transaction_id (number) - Transaction identifying number
     
 + Response 200 (application/json)
 
@@ -1240,6 +1883,9 @@ This is the object that identifies a user in our application.
     + credits (string) - Number of credits stringified
     + avatar (object) - Similar to image of parkings
     + `expiration-close` (boolean) - Whether the expiration date is close for the user
+    + roles (array) - User roles in the system
+    + parkings (array) - Parkings accessible to the user
+    + locale (string) - User's preferred language
 
 ### Retrieve information for a user [GET]
 Retrieve the information for a given user.
@@ -1255,13 +1901,28 @@ Retrieve the information for a given user.
                     "type": "users",
                     "id": "<USER_ID>",
                     "attributes": {
-                        "email": "<EMAIL>",
+                        "email": "carlos.mendez@example.com",
                         "member": "1604",
-                        "name": "<NAME>",
-                        "surname": "<SURNAME>",
-                        "phone": "123456",
-                        "address": null,
-                        "credits": "50.0",
+                        "name": "Carlos",
+                        "surname": "Méndez García",
+                        "phone": "+34612345678",
+                        "address": "Calle Gran Vía 42, 28013 Madrid",
+                        "credits": "25.50",
+                        "expiration-close": false,
+                        "roles": ["user", "maintenance"],
+                        "parkings": [
+                            {
+                                "id": "12",
+                                "name": "Estación de Atocha (Madrid)",
+                                "access": "granted"
+                            },
+                            {
+                                "id": "24",
+                                "name": "Plaza Catalunya (Barcelona)",
+                                "access": "granted"
+                            }
+                        ],
+                        "locale": "en",
                         "avatar": {
                             "url": "https://doncicleto.s3.amazonaws.com/uploads/user/avatar/<USER_ID>/bike.jpg",
                             "thumb": {
@@ -1665,6 +2326,8 @@ Create a new voucher object for PPU credits.
 # Group Payments
 
 ## Generate Braintree Token [POST /api/v1/payments/generate_token]
+**⚠️ DEPRECATED**: This endpoint uses the legacy Braintree payment system. Please migrate to Stripe Setup Intents for new implementations. See `/api/v1/credit_cards/setup_intent` for the recommended approach.
+
 + Response 200 (application/json)
     + Body
             { "token": "<BRAINTREE_TOKEN>" }
@@ -1681,6 +2344,8 @@ Create a new voucher object for PPU credits.
             { "code": "COUPON2024", "isValid": false, "discount": "" }
 
 ## Braintree Checkout [POST /api/v1/payments/checkout]
+**⚠️ DEPRECATED**: This endpoint uses the legacy Braintree payment system. Please migrate to Stripe Payment Intents or Mobile Payment Sessions for new implementations. See `/api/v1/mobile_payments/create_checkout_session` for the recommended approach.
+
 + Request (application/json)
     + Body
             { "voucher_id": "<VOUCHER_ID>", "nonce": "<NONCE>", "credit_card_id": "<CREDIT_CARD_ID>" }
@@ -1703,7 +2368,7 @@ Create a new voucher object for PPU credits.
                 "success": true,
                 "checkout_url": "https://checkout.stripe.com/...",
                 "transaction_id": "<TRANSACTION_ID>",
-                "provider": "stripe",  
+                "provider": "stripe",
                 "requires_action": true
             }
 + Response 200 (application/json)
@@ -1712,6 +2377,422 @@ Create a new voucher object for PPU credits.
                 "success": true,
                 "transaction_id": "<TRANSACTION_ID>",
                 "provider": "stripe",
-                "status": "succeeded",  
+                "status": "succeeded",
                 "requires_action": false
+            }
+
+# Group Payment Methods
+These endpoints handle payment method configuration and availability for tenants.
+
+## Payment Methods Collection [/api/v1/payment_methods]
+### Get Available Payment Methods [GET]
+Retrieve available payment methods for the current tenant. Returns configured payment providers with their status and capabilities.
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": [
+                    {
+                        "type": "tenant-payment-methods",
+                        "id": "1",
+                        "attributes": {
+                            "name": "stripe",
+                            "provider": "stripe",
+                            "enabled": true,
+                            "is-default": true,
+                            "configured": true,
+                            "status": "active",
+                            "display-name": "Stripe"
+                        }
+                    },
+                    {
+                        "type": "tenant-payment-methods",
+                        "id": "2",
+                        "attributes": {
+                            "name": "redsys",
+                            "provider": "redsys",
+                            "enabled": true,
+                            "is-default": false,
+                            "configured": true,
+                            "status": "active",
+                            "display-name": "Redsys (Spanish Banks)"
+                        }
+                    }
+                ]
+            }
+
+# Group Credit Cards
+
+## Collection of Credit Cards [/api/v1/credit_cards]
+### Retrieve all credit cards [GET]
+Get a list of all credit cards for the current user.
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": [
+                    {
+                        "type": "credit_cards",
+                        "id": "42",
+                        "attributes": {
+                            "provider": "stripe",
+                            "merchant_identifier": "card_1234567890abcdef",
+                            "last_four": "4242",
+                            "card_type": "Visa",
+                            "expires_month": 12,
+                            "expires_year": 2025,
+                            "is_default": true,
+                            "created_at": "2024-01-15T10:30:00Z"
+                        }
+                    }
+                ]
+            }
+
+### Create a credit card [POST]
+Add a new credit card for the current user.
+
++ Request (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "credit_cards",
+                    "attributes": {
+                        "provider": "stripe",
+                        "payment_method_id": "pm_1234567890abcdef"
+                    }
+                }
+            }
+
++ Response 201 (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "credit_cards",
+                    "id": "43",
+                    "attributes": {
+                        "provider": "stripe",
+                        "merchant_identifier": "card_1234567890abcdef",
+                        "last_four": "4242",
+                        "card_type": "Visa",
+                        "expires_month": 12,
+                        "expires_year": 2025,
+                        "is_default": false,
+                        "created_at": "2024-07-16T15:45:00Z"
+                    }
+                }
+            }
+
+## Individual Credit Card [/api/v1/credit_cards/{card_id}]
+### Retrieve a credit card [GET]
+Get details of a specific credit card.
+
++ Parameters
+    + card_id (number) - ID of the credit card
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "data": {
+                    "type": "credit_cards",
+                    "id": "42",
+                    "attributes": {
+                        "provider": "stripe",
+                        "merchant_identifier": "card_1234567890abcdef",
+                        "last_four": "4242",
+                        "card_type": "Visa",
+                        "expires_month": 12,
+                        "expires_year": 2025,
+                        "is_default": true,
+                        "created_at": "2024-01-15T10:30:00Z"
+                    }
+                }
+            }
+
+## Credit Card Deletion [/api/v1/credit-cards/{card_id}]
+### Delete a credit card [DELETE]
+Remove a credit card from the user's account. Note: This endpoint uses the hyphenated URL format.
+
++ Parameters
+    + card_id (number) - ID of the credit card
+
++ Response 204
+
++ Response 404 (application/json)
+    + Body
+    
+            {
+                "errors": [
+                    {
+                        "title": "Not found",
+                        "detail": "Credit card not found"
+                    }
+                ]
+            }
+
+# Group Credit Cards (Enhanced)
+Enhanced credit card management with modern Stripe integration and secure setup flows.
+
+## Credit Card Setup [/api/v1/credit_cards/setup_intent]
+### Create Setup Intent [POST]
+Create a Stripe setup intent for secure card registration. This modern approach replaces direct card tokenization with a secure, PCI-compliant flow.
+
++ Request (application/json)
+    + Body
+    
+            {
+                "platform": "ios",
+                "success_url": "https://app.doncicleto.com/payment-success",
+                "cancel_url": "https://app.doncicleto.com/payment-cancel"
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "client_secret": "seti_1234567890abcdef_secret_abc123",
+                "setup_intent_id": "seti_1234567890abcdef",
+                "requires_action": false,
+                "status": "requires_payment_method"
+            }
+
++ Response 422 (application/json)
+    + Body
+    
+            {
+                "errors": [
+                    {
+                        "title": "Setup Intent Error",
+                        "detail": "Unable to create setup intent: Invalid platform specified",
+                        "status": "422"
+                    }
+                ]
+            }
+
+## Credit Card Setup Verification [/api/v1/credit_cards/verify_setup]
+### Verify Setup Completion [GET]
+Verify that a setup intent has been completed successfully and the payment method is ready for use.
+
++ Parameters
+    + setup_intent_id (string) - The setup intent ID to verify
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "status": "succeeded",
+                "payment_method_id": "pm_1234567890abcdef",
+                "setup_intent_id": "seti_1234567890abcdef",
+                "credit_card": {
+                    "id": "123",
+                    "last_four": "4242",
+                    "brand": "visa",
+                    "exp_month": 12,
+                    "exp_year": 2025,
+                    "verified": true
+                }
+            }
+
++ Response 400 (application/json)
+    + Body
+    
+            {
+                "success": false,
+                "error": "Setup intent not found or not completed",
+                "status": "requires_payment_method"
+            }
+
+## Credit Card Setup Callback [/api/v1/credit_cards/callback]
+### Handle Setup Callback [GET]
+Handle callback from payment setup completion. This endpoint processes the return from mobile payment flows.
+
++ Parameters
+    + setup_intent (string) - The setup intent ID
+    + setup_intent_client_secret (string) - The client secret
+    + redirect_status (string) - Status of the redirect (succeeded, failed, etc.)
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "status": "succeeded",
+                "message": "Payment method setup completed successfully",
+                "redirect_url": "https://app.doncicleto.com/payment-success"
+            }
+
++ Response 400 (application/json)
+    + Body
+    
+            {
+                "success": false,
+                "error": "Setup failed",
+                "message": "Payment method setup could not be completed",
+                "redirect_url": "https://app.doncicleto.com/payment-cancel"
+            }
+
+# Group Webhooks
+Webhook endpoints for processing external payment and system events.
+
+## Stripe Webhooks [/api/v1/webhooks/stripe]
+### Process Stripe Webhook [POST]
+Handle Stripe webhook events for payment processing, subscription updates, and payment method changes.
+
+**Supported Events:**
+- `checkout.session.completed` - Payment checkout completed
+- `payment_intent.succeeded` - Payment succeeded
+- `payment_intent.processing` - Payment processing
+- `payment_intent.payment_failed` - Payment failed
+- `setup_intent.succeeded` - Payment method setup completed
+- `customer.updated` - Customer information updated
+
++ Request (application/json)
+    + Headers
+    
+            Stripe-Signature: t=1234567890,v1=abc123def456,v0=old_signature
+    
+    + Body
+    
+            {
+                "id": "evt_1234567890abcdef",
+                "object": "event",
+                "type": "payment_intent.succeeded",
+                "data": {
+                    "object": {
+                        "id": "pi_1234567890abcdef",
+                        "object": "payment_intent",
+                        "amount": 1999,
+                        "currency": "eur",
+                        "status": "succeeded",
+                        "metadata": {
+                            "user_id": "123",
+                            "transaction_id": "456"
+                        }
+                    }
+                }
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "received": true,
+                "processed": true,
+                "event_id": "evt_1234567890abcdef",
+                "event_type": "payment_intent.succeeded"
+            }
+
++ Response 400 (application/json)
+    + Body
+    
+            {
+                "received": false,
+                "error": "Invalid signature",
+                "message": "Webhook signature verification failed"
+            }
+
++ Response 404 (application/json)
+    + Body
+    
+            {
+                "received": true,
+                "processed": false,
+                "error": "Event not supported",
+                "event_type": "unsupported.event"
+            }
+
+# Group Mobile Payments (Enhanced)
+Modern mobile payment processing with deep linking and platform-specific optimizations.
+
+## Mobile Checkout Session [/api/v1/mobile_payments/create_checkout_session]
+### Create Mobile Checkout Session [POST]
+Create a mobile-optimized payment session with deep linking support for iOS and Android applications.
+
++ Request (application/json)
+    + Body
+    
+            {
+                "provider": "stripe",
+                "platform": "ios",
+                "voucher_id": "123",
+                "success_url": "doncicleto://payment-success",
+                "cancel_url": "doncicleto://payment-cancel"
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "checkout_url": "https://checkout.stripe.com/c/pay/cs_test_123#fidkdWxOYHwnc",
+                "transaction_id": "789",
+                "provider": "stripe",
+                "requires_action": true,
+                "session_id": "cs_test_123456789abcdef",
+                "expires_at": "2024-01-01T01:00:00Z"
+            }
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "transaction_id": "789",
+                "provider": "stripe",
+                "status": "succeeded",
+                "requires_action": false,
+                "payment_intent_id": "pi_123456789abcdef"
+            }
+
++ Response 422 (application/json)
+    + Body
+    
+            {
+                "success": false,
+                "errors": [
+                    {
+                        "title": "Payment Error",
+                        "detail": "Invalid voucher or insufficient funds",
+                        "status": "422"
+                    }
+                ]
+            }
+
+## Mobile Payment Callback [/api/v1/mobile_payments/callback]
+### Handle Mobile Payment Callback [GET]
+Process callback from mobile payment completion with deep linking support.
+
++ Parameters
+    + session_id (string) - The checkout session ID
+    + payment_intent (string) - The payment intent ID
+    + payment_intent_client_secret (string) - The client secret
+    + redirect_status (string) - Status of the redirect (succeeded, failed, etc.)
+
++ Response 200 (application/json)
+    + Body
+    
+            {
+                "success": true,
+                "status": "succeeded",
+                "transaction_id": "789",
+                "payment_intent_id": "pi_123456789abcdef",
+                "amount": 1999,
+                "currency": "eur",
+                "redirect_url": "doncicleto://payment-success"
+            }
+
++ Response 400 (application/json)
+    + Body
+    
+            {
+                "success": false,
+                "error": "Payment failed",
+                "message": "Payment could not be processed",
+                "redirect_url": "doncicleto://payment-cancel"
             }
